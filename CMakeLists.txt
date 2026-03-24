@@ -12,13 +12,28 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # ── Compiler flags ─────────────────────────────────────────────────────────────
-add_compile_options(
-        -Wall -Wextra -Wpedantic
-        $<$<CONFIG:Release>:-O3 -DNDEBUG>
-        $<$<CONFIG:Debug>:-g -fsanitize=address,undefined>
+# Указываем флаги для Debug сборки
+target_compile_options(jerboa-tcp-tls PRIVATE
+        $<$<CONFIG:Debug>:
+        -g
+        -fsanitize=address,undefined
+        -fno-omit-frame-pointer
+        >
 )
-add_link_options(
-        $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+
+# Указываем флаги для Release сборки
+target_compile_options(jerboa-tcp-tls PRIVATE
+        $<$<CONFIG:Release>:
+        -O3
+        -DNDEBUG
+        >
+)
+
+# Не забудь про линковку санитайзеров (иначе будут ошибки undefined reference)
+target_link_options(jerboa-tcp-tls PRIVATE
+        $<$<CONFIG:Debug>:
+        -fsanitize=address,undefined
+        >
 )
 
 # ── Find dependencies ──────────────────────────────────────────────────────────
