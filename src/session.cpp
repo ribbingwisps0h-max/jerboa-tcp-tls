@@ -40,35 +40,18 @@ Session::Session(tcp::socket   client_sock,
 
 // ── run ───────────────────────────────────────────────────────────────────────
 asio::awaitable<void> Session::run() {
-    auto ep = client_sock_.remote_endpoint();
-    LOG_INFO("[session {}] accepted from {}:{}", id_,
-             ep.address().to_string(), ep.port());
-
     try {
         co_await connect_remote();
 
-        // Run both directions concurrently; finish when either side closes.
-        co_await (
-            pump(client_sock_, *tls_stream_, "client→remote")
-            && pump_reverse(*tls_stream_, client_sock_, "remote→client")
-        );
-    } catch (const boost::system::system_error& e) {
-        if (e.code() != asio::error::eof &&
-            e.code() != asio::error::connection_reset) {
-            LOG_WARN("[session {}] error: {}", id_, e.what());
-        }
+        using namespace boost::asio::experimental::awaitable_operators;
+        // Запускаем два потока данных параллельно
+        co_await (pump(client_sock_, *tls_stream_, ">>>") &&
+                  pump_reverse(*tls_stream_, client_sock_, "<<<"));
+
     } catch (const std::exception& e) {
-        LOG_WARN("[session {}] exception: {}", id_, e.what());
+        LOG_DEBUG("[session {}] closed: {}", id_, e.what());
     }
-
-    // Graceful shutdown
-    boost::system::error_code ec;
-    client_sock_.shutdown(tcp::socket::shutdown_both, ec);
-    if (tls_stream_) {
-        tls_stream_->lowest_layer().shutdown(tcp::socket::shutdown_both, ec);
-    }
-
-    LOG_INFO("[session {}] closed", id_);
+    LOG_INFO("[session {}] terminated", id_);
 }
 
 // ── connect_remote ────────────────────────────────────────────────────────────
