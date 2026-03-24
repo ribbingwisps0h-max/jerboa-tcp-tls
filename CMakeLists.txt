@@ -13,27 +13,22 @@ endif()
 
 # ── Compiler flags ─────────────────────────────────────────────────────────────
 # Указываем флаги для Debug сборки
+# Для Debug: добавляем санитайзеры и отладочную инфу
 target_compile_options(jerboa-tcp-tls PRIVATE
-        $<$<CONFIG:Debug>:
-        -g
-        -fsanitize=address,undefined
-        -fno-omit-frame-pointer
-        >
+        $<$<CONFIG:Debug>:-g>
+        $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+        $<$<CONFIG:Debug>:-fno-omit-frame-pointer>
 )
 
-# Указываем флаги для Release сборки
+# Для Release: добавляем оптимизацию
 target_compile_options(jerboa-tcp-tls PRIVATE
-        $<$<CONFIG:Release>:
-        -O3
-        -DNDEBUG
-        >
+        $<$<CONFIG:Release>:-O3>
+        $<$<CONFIG:Release>:-DNDEBUG>
 )
 
-# Не забудь про линковку санитайзеров (иначе будут ошибки undefined reference)
+# Важно: для санитайзеров нужна и линковка!
 target_link_options(jerboa-tcp-tls PRIVATE
-        $<$<CONFIG:Debug>:
-        -fsanitize=address,undefined
-        >
+        $<$<CONFIG:Debug>:-fsanitize=address,undefined>
 )
 
 # ── Find dependencies ──────────────────────────────────────────────────────────
