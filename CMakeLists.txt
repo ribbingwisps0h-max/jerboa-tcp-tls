@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.1)
+cmake_minimum_required(VERSION 3.28)
 project(jerboa-tcp-tls VERSION 1.0.0 LANGUAGES CXX)
 
 # ── C++23 ─────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ target_link_options(jerboa-tcp-tls PRIVATE
 find_package(OpenSSL 3.0 REQUIRED)
 
 # Try to find Boost.Asio (header-only component, but we need Boost.System)
-find_package(Boost 1.90.0 REQUIRED COMPONENTS system)
+find_package(Boost 1.83.0 REQUIRED COMPONENTS system)
 
 # Threads
 find_package(Threads REQUIRED)
