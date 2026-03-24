@@ -11,51 +11,41 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
+# ── Find dependencies ──────────────────────────────────────────────────────────
+find_package(OpenSSL 3.0 REQUIRED)
+find_package(Boost 1.83.0 REQUIRED COMPONENTS system)
+find_package(Threads REQUIRED)
+
+# ── Sources ────────────────────────────────────────────────────────────────────
+# Убрал дубликаты main.cpp
+set(SOURCES
+        src/main.cpp
+        src/tls_server.cpp
+        src/session.cpp
+)
+
+# Сначала СОЗДАЕМ исполняемый файл
+add_executable(${PROJECT_NAME} ${SOURCES})
+
 # ── Compiler flags ─────────────────────────────────────────────────────────────
-# Указываем флаги для Debug сборки
-# Указываем флаги для Debug сборки
-target_compile_options(jerboa-tcp-tls PRIVATE
+# Теперь, когда проект создан, можно вешать на него флаги
+target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Debug>:
         -g
         -fsanitize=address,undefined
         -fno-omit-frame-pointer
         >
-)
-
-# Указываем флаги для Release сборки
-target_compile_options(jerboa-tcp-tls PRIVATE
         $<$<CONFIG:Release>:
         -O3
         -DNDEBUG
         >
 )
 
-# Не забудь про линковку санитайзеров (иначе будут ошибки undefined reference)
-target_link_options(jerboa-tcp-tls PRIVATE
+target_link_options(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Debug>:
         -fsanitize=address,undefined
         >
 )
-
-# ── Find dependencies ──────────────────────────────────────────────────────────
-find_package(OpenSSL 3.0 REQUIRED)
-
-# Try to find Boost.Asio (header-only component, but we need Boost.System)
-find_package(Boost 1.83.0 REQUIRED COMPONENTS system)
-
-# Threads
-find_package(Threads REQUIRED)
-
-# ── Sources ────────────────────────────────────────────────────────────────────
-set(SOURCES
-        src/main.cpp
-        src/tls_server.cpp
-        src/session.cpp
-        src/main.cpp
-)
-
-add_executable(${PROJECT_NAME} ${SOURCES}
-        src/main.cpp)
 
 # ── Include dirs ───────────────────────────────────────────────────────────────
 target_include_directories(${PROJECT_NAME}
@@ -73,22 +63,21 @@ target_link_libraries(${PROJECT_NAME}
         Threads::Threads
 )
 
-# ── Feature-test macros required for C++23 print / expected ───────────────────
+# ── Feature-test macros ────────────────────────────────────────────────────────
 target_compile_definitions(${PROJECT_NAME}
         PRIVATE
         BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT=1
-        # Suppress Boost deprecation noise on newer standards
         BOOST_ALLOW_DEPRECATED_HEADERS
 )
 
 # ── Install ────────────────────────────────────────────────────────────────────
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
+# ── Status ─────────────────────────────────────────────────────────────────────
 message(STATUS "────────────────────────────────────────")
-message(STATUS "  jerboa-tcp-tls ${PROJECT_VERSION}")
+message(STATUS "  Project    : ${PROJECT_NAME} ${PROJECT_VERSION}")
 message(STATUS "  Build type : ${CMAKE_BUILD_TYPE}")
 message(STATUS "  C++ std    : ${CMAKE_CXX_STANDARD}")
 message(STATUS "  OpenSSL    : ${OPENSSL_VERSION}")
 message(STATUS "  Boost      : ${Boost_VERSION}")
 message(STATUS "────────────────────────────────────────")
-
